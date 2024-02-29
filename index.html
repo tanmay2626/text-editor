@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech Recognition</title>
+  </head>
+  <body>
+    <button id="startButton">Start Speech Recognition</button>
+    <div id="transcript"></div>
+
+    <script>
+      // Function to handle speech recognition
+      function startSpeechRecognition() {
+        const recognition = new window.webkitSpeechRecognition(); // Create speech recognition object
+
+        recognition.lang = "en-US"; // Set recognition language
+
+        recognition.onstart = function () {
+          console.log("Listening...");
+        };
+
+        recognition.onerror = function (event) {
+          console.error("Speech recognition error occurred:", event.error);
+        };
+
+        recognition.onresult = function (event) {
+          const transcript = event.results[0][0].transcript;
+          console.log("Transcript:", transcript);
+          document.getElementById("transcript").textContent = transcript;
+
+          // You can process the transcript here as needed
+          // For example, you can call your mathRecognition function
+          // const result = mathRecognition(transcript);
+          // console.log("Result:", result);
+        };
+
+        recognition.start(); // Start speech recognition
+      }
+
+      // Event listener for start button
+      document
+        .getElementById("startButton")
+        .addEventListener("click", startSpeechRecognition);
+    </script>
+  </body>
+</html>

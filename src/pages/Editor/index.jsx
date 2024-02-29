@@ -1,23 +1,27 @@
+import React, { useState, useEffect, useContext } from "react";
 import Icon from "@material-tailwind/react/Icon";
 import Button from "@material-tailwind/react/Button";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-// pdfMake.vfs = pdfFonts.pdfMake.vfs;
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 import StateToPdfMake from "draft-js-export-pdfmake";
 import TextEditor from "../../components/TextEditor";
 import { AuthContext } from "../../context/firebase";
-import { useContext, useEffect } from "react";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { signOut } from "@firebase/auth";
 import { auth, firestore } from "../../fireabase/config";
 import { doc, getDoc } from "@firebase/firestore";
-import { useState } from "react";
+import mathRecognition from "./speech";
 
 const Editor = () => {
   const { user, setUser } = useContext(AuthContext);
   const [userDoc, setUserDoc] = useState(null);
   const history = useHistory();
   const { id } = useParams();
+  const { transcript, resetTranscript } = useSpeechRecognition();
+
   if (user === null) history.push("/");
 
   useEffect(() => {
@@ -35,6 +39,35 @@ const Editor = () => {
     };
     getUerDoc();
   }, [id, user?.uid, history]);
+
+  useEffect(() => {
+    if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+      console.log("Speech recognition not supported.");
+    } else {
+      console.log("Speech recognition supported.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (transcript) {
+      console.log("Transcript:", transcript);
+      const result = mathRecognition(transcript);
+      console.log("Result:", result);
+      resetTranscript();
+    }
+  }, [transcript, resetTranscript]);
+
+  const startListening = () => {
+    SpeechRecognition.startListening({
+      continuous: true,
+    });
+    console.log("Strarted listening");
+  };
+
+  const stopHandle = () => {
+    SpeechRecognition.stopListening();
+  };
+
   return (
     <>
       <header className="flex justify-between items-center p-3 pb-1">
@@ -54,6 +87,12 @@ const Editor = () => {
             <p className="options">Tools</p>
             <p className="options">Add-ons</p>
             <p className="options">Help</p>
+            <p onClick={startListening} className="options">
+              Speech
+            </p>
+            <p onClick={stopHandle} className="options">
+              Stop
+            </p>
           </div>
         </div>
         <Button
@@ -66,7 +105,6 @@ const Editor = () => {
           ripple="light"
           onClick={() => {
             const stateToPdfMake = new StateToPdfMake(userDoc?.editorState);
-            // console.log(stateToPdfMake.generate());
             pdfMake.vfs = pdfFonts.pdfMake.vfs;
             pdfMake
               .createPdf(stateToPdfMake.generate())
